@@ -18,10 +18,15 @@ limitations under the License.
 
 #include "ecp.h"
 
+#include <alloca.h>
+
 #pragma GCC visibility push(default)
 
 void ecp_pubkey_u8(uint8_t Q[], const uint8_t p[], const uint8_t a[], const uint8_t G[], const uint8_t d[], size_t l) {
-	mp_limb_t p_[MP_NLIMBS(l)], a_[MP_NLIMBS(l)], G_[3][MP_NLIMBS(l)], d_[MP_NLIMBS(l)];
+	mp_limb_t* p_[MP_NLIMBS(l)];
+	mp_limb_t a_[MP_NLIMBS(l)];
+	mp_limb_t G_[3][MP_NLIMBS(l)];
+	mp_limb_t d_[MP_NLIMBS(l)];
 	bytes_to_mpn(p_, p, l);
 	bytes_to_mpn(a_, a, l);
 	bytes_to_mpn(G_[0], &G[0], l), bytes_to_mpn(G_[1], &G[l], l), bytes_to_mpn(G_[2], &G[l * 2], l);
@@ -32,7 +37,12 @@ void ecp_pubkey_u8(uint8_t Q[], const uint8_t p[], const uint8_t a[], const uint
 }
 
 void ecp_sign_u8(uint8_t r[], uint8_t s[], const uint8_t p[], const uint8_t a[], const uint8_t G[], const uint8_t n[], const uint8_t d[], const uint8_t z[], size_t l) {
-	mp_limb_t p_[MP_NLIMBS(l)], a_[MP_NLIMBS(l)], G_[3][MP_NLIMBS(l)], n_[MP_NLIMBS(l)], d_[MP_NLIMBS(l)], z_[MP_NLIMBS(l)];
+	mp_limb_t p_[MP_NLIMBS(l)];
+	mp_limb_t a_[MP_NLIMBS(l)];
+	mp_limb_t G_[3][MP_NLIMBS(l)];
+	mp_limb_t n_[MP_NLIMBS(l)];
+	mp_limb_t d_[MP_NLIMBS(l)];
+	mp_limb_t z_[MP_NLIMBS(l)];
 	bytes_to_mpn(p_, p, l);
 	bytes_to_mpn(a_, a, l);
 	bytes_to_mpn(G_[0], &G[0], l), bytes_to_mpn(G_[1], &G[l], l), bytes_to_mpn(G_[2], &G[l * 2], l);
@@ -46,7 +56,14 @@ void ecp_sign_u8(uint8_t r[], uint8_t s[], const uint8_t p[], const uint8_t a[],
 }
 
 bool ecp_verify_u8(const uint8_t p[], const uint8_t a[], const uint8_t G[], const uint8_t n[], const uint8_t Q[], const uint8_t z[], const uint8_t r[], const uint8_t s[], size_t l) {
-	mp_limb_t p_[MP_NLIMBS(l)], a_[MP_NLIMBS(l)], G_[3][MP_NLIMBS(l)], n_[MP_NLIMBS(l)], Q_[3][MP_NLIMBS(l)], z_[MP_NLIMBS(l)], r_[MP_NLIMBS(l)], s_[MP_NLIMBS(l)];
+	mp_limb_t p_[MP_NLIMBS(l)];
+	mp_limb_t a_[MP_NLIMBS(l)];
+	mp_limb_t G_[3][MP_NLIMBS(l)];
+	mp_limb_t n_[MP_NLIMBS(l)];
+	mp_limb_t Q_[3][MP_NLIMBS(l)];
+	mp_limb_t z_[MP_NLIMBS(l)];
+	mp_limb_t r_[MP_NLIMBS(l)];
+	mp_limb_t s_[MP_NLIMBS(l)];
 	bytes_to_mpn(p_, p, l);
 	bytes_to_mpn(a_, a, l);
 	bytes_to_mpn(G_[0], &G[0], l), bytes_to_mpn(G_[1], &G[l], l), bytes_to_mpn(G_[2], &G[l * 2], l);
