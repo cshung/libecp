@@ -18,12 +18,19 @@ limitations under the License.
 
 #include "ecp.h"
 
+
+#ifdef _WIN32
+#include <malloc.h>
+#define ALLOCA _alloca
+#else
 #include <alloca.h>
+#define ALLOCA alloca
+#endif
 
 #pragma GCC visibility push(default)
 
 void ecp_pubkey_u8(uint8_t Q[], const uint8_t p[], const uint8_t a[], const uint8_t G[], const uint8_t d[], size_t l) {
-	mp_limb_t* p_[MP_NLIMBS(l)];
+	mp_limb_t* p_ = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * MP_NLIMBS(l));
 	mp_limb_t a_[MP_NLIMBS(l)];
 	mp_limb_t G_[3][MP_NLIMBS(l)];
 	mp_limb_t d_[MP_NLIMBS(l)];
