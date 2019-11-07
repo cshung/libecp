@@ -496,14 +496,17 @@ bool ecp_verify(const mp_limb_t p[], const mp_limb_t a[], const mp_limb_t G[], c
 	mp_limb_t* u1 = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * l);
 	mp_limb_t* u2 = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * l);
 	fp_mul(u1, z, w, n, l), fp_mul(u2, r, w, n, l);
-	mp_limb_t Rp[3][l], T0[3][l], T1[3][l], T2[3][l];
-	ecp_add(*T2, ecp_mul(*T0, u1, G, a, p, l), ecp_mul(*T1, u2, Q, a, p, l), a, p, l);
-	if (mpn_zero_p(T2[2], l)) {
+	mp_limb_t* Rp = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3*l);
+	mp_limb_t* T0 = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3*l);
+	mp_limb_t* T1 = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3*l);
+	mp_limb_t* T2 = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3*l);
+	ecp_add(T2, ecp_mul(T0, u1, G, a, p, l), ecp_mul(T1, u2, Q, a, p, l), a, p, l);
+	if (mpn_zero_p(&T2[2 * l], l)) {
 		return false;
 	}
-	ecp_proj(*Rp, *T2, p, l);
-	if (mpn_cmp(Rp[0], n, l) >= 0) {
-		mpn_sub_n(Rp[0], Rp[0], n, l);
+	ecp_proj(Rp, T2, p, l);
+	if (mpn_cmp(Rp, n, l) >= 0) {
+		mpn_sub_n(Rp, Rp, n, l);
 	}
-	return mpn_cmp(Rp[0], r, l) == 0;
+	return mpn_cmp(Rp, r, l) == 0;
 }
