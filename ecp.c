@@ -410,7 +410,9 @@ static mp_limb_t * ecp_add(mp_limb_t R[], const mp_limb_t N1[], const mp_limb_t 
 static mp_limb_t * ecp_mul_(mp_limb_t R[], const mp_limb_t n1[], const mp_limb_t N2[], const mp_limb_t a[], const mp_limb_t p[], size_t l, mp_limb_t * (*add)(mp_limb_t [], const mp_limb_t [], const mp_limb_t [], const mp_limb_t [], const mp_limb_t [], size_t)) {
 	bool active = false;
 	size_t swaps = 0;
-	mp_limb_t Ss[l * 3], *S = Ss, *T;
+	mp_limb_t* Ss = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * l * 3);
+	mp_limb_t* S = Ss;
+	mp_limb_t* T;
 	for (size_t i = l; i > 0;) {
 		mp_limb_t w = n1[--i];
 		for (size_t j = sizeof(mp_limb_t) * 8; j > 0; --j) {
@@ -455,8 +457,8 @@ static mp_limb_t * ecp_proj(mp_limb_t R[], const mp_limb_t N[], const mp_limb_t 
 }
 
 void ecp_pubkey(mp_limb_t Q[], const mp_limb_t p[], const mp_limb_t a[], const mp_limb_t G[], const mp_limb_t d[], size_t l) {
-	mp_limb_t R[3][l];
-	ecp_proj(Q, ecp_mul(*R, d, G, a, p, l), p, l);
+	mp_limb_t* R = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3 * l);
+	ecp_proj(Q, ecp_mul(R, d, G, a, p, l), p, l);
 }
 
 void ecp_sign(mp_limb_t r[], mp_limb_t s[], const mp_limb_t p[], const mp_limb_t a[], const mp_limb_t G[], const mp_limb_t n[], const mp_limb_t d[], const mp_limb_t z[], size_t l) {
@@ -466,16 +468,18 @@ void ecp_sign(mp_limb_t r[], mp_limb_t s[], const mp_limb_t p[], const mp_limb_t
 		for (size_t r = l; r > 0;) {
 			r -= fread(&k[l - r], sizeof(mp_limb_t), r, random);
 		}
-		mp_limb_t R[3][l], S[3][l];
-		ecp_proj(*R, ecp_mul(*S, k, G, a, p, l), p, l);
-		if (mpn_cmp(R[0], n, l) >= 0) {
-			mpn_sub_n(R[0], R[0], n, l);
+		mp_limb_t* R = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3 * l);
+		mp_limb_t* S = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3 * l);
+		ecp_proj(R, ecp_mul(S, k, G, a, p, l), p, l);
+		if (mpn_cmp(R, n, l) >= 0) {
+			mpn_sub_n(R, R, n, l);
 		}
-		if (!mpn_zero_p(R[0], l)) {
-			mp_limb_t t0[l], t1[l];
-			fp_mul(s, fp_inv(t0, k, n, l), fp_add(t1, z, fp_mul(t1, R[0], d, n, l), n, l), n, l);
+		if (!mpn_zero_p(R, l)) {
+			mp_limb_t* t0 = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * l);
+			mp_limb_t* t1 = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * l);
+			fp_mul(s, fp_inv(t0, k, n, l), fp_add(t1, z, fp_mul(t1, R, d, n, l), n, l), n, l);
 			if (!mpn_zero_p(s, l)) {
-				mpn_copyi(r, R[0], l);
+				mpn_copyi(r, R, l);
 				break;
 			}
 		}
