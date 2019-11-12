@@ -201,6 +201,10 @@ void mpn_to_bytes(uint8_t bytes[], const mp_limb_t mpn[], size_t n) {
 	}
 }
 
+/*
+ * Adds two multi-precision integers n1 and n2 in the finite field of order p,
+ * stores their sum into r, and returns r.
+ */
 static mp_limb_t * fp_add(mp_limb_t r[], const mp_limb_t n1[], const mp_limb_t n2[], const mp_limb_t p[], size_t l) {
 	if (mpn_add_n(r, n1, n2, l) || mpn_cmp(r, p, l) >= 0) {
 		mpn_sub_n(r, r, p, l);
@@ -208,6 +212,10 @@ static mp_limb_t * fp_add(mp_limb_t r[], const mp_limb_t n1[], const mp_limb_t n
 	return r;
 }
 
+/*
+ * Subtracts two multi-precision integers n1 and n2 in the finite field of
+ * order p, stores the difference n1 - n2 into r, and returns r.
+ */
 static mp_limb_t * fp_sub(mp_limb_t r[], const mp_limb_t n1[], const mp_limb_t n2[], const mp_limb_t p[], size_t l) {
 	if (mpn_sub_n(r, n1, n2, l)) {
 		mpn_add_n(r, r, p, l);
@@ -215,6 +223,10 @@ static mp_limb_t * fp_sub(mp_limb_t r[], const mp_limb_t n1[], const mp_limb_t n
 	return r;
 }
 
+/*
+ * Doubles the given multi-precision integer n in the finite field of order p,
+ * stores the result into r, and returns r.
+ */
 static mp_limb_t * fp_dbl(mp_limb_t r[], const mp_limb_t n[], const mp_limb_t p[], size_t l) {
 	if (mpn_lshift(r, n, l, 1) || mpn_cmp(r, p, l) >= 0) {
 		mpn_sub_n(r, r, p, l);
@@ -222,6 +234,10 @@ static mp_limb_t * fp_dbl(mp_limb_t r[], const mp_limb_t n[], const mp_limb_t p[
 	return r;
 }
 
+/*
+ * Multiplies two multi-precision integers n1 and n2 in the finite field of
+ * order p, stores their product into r, and returns r.
+ */
 static mp_limb_t * fp_mul(mp_limb_t r[], const mp_limb_t n1[], const mp_limb_t n2[], const mp_limb_t p[], size_t l) {
 	mpn_zero(r, l);
 	bool active = false;
@@ -241,10 +257,18 @@ static mp_limb_t * fp_mul(mp_limb_t r[], const mp_limb_t n1[], const mp_limb_t n
 	return r;
 }
 
+/*
+ * Squares the given multi-precision integer n in the finite field of order p,
+ * stores the square into r, and returns r.
+ */
 static mp_limb_t * fp_sqr(mp_limb_t r[], const mp_limb_t n[], const mp_limb_t p[], size_t l) {
 	return fp_mul(r, n, n, p, l);
 }
 
+/*
+ * Squares the given multi-precision integer n in the finite field of order p,
+ * stores the square into r, and returns r.
+ */
 static mp_limb_t * fp_inv(mp_limb_t r[], const mp_limb_t n[], const mp_limb_t p[], size_t l) {
 	if (mpn_zero_p(n, l)) {
 		raise(SIGFPE);
@@ -296,11 +320,18 @@ static mp_limb_t * fp_inv(mp_limb_t r[], const mp_limb_t n[], const mp_limb_t p[
 	}
 }
 
+/*
+ * Copies the elliptic-curve point at N into R and returns R.
+ */
 static inline mp_limb_t * ecp_copy(mp_limb_t R[], const mp_limb_t N[], size_t l) {
 	mpn_copyi(&R[0], &N[0], l), mpn_copyi(&R[l], &N[l], l), mpn_copyi(&R[l * 2], &N[l * 2], l);
 	return R;
 }
 
+/*
+ * Doubles the elliptic-curve point N on the curve with parameter a in the
+ * finite field of order p, stores the result in R, and returns R.
+ */
 static mp_limb_t * ecp_dbl(mp_limb_t R[], const mp_limb_t N[], const mp_limb_t a[], const mp_limb_t p[], size_t l) {
 	const mp_limb_t *x = &N[0], *y = &N[l], *z = &N[l * 2];
 	mp_limb_t *xr = &R[0], *yr = &R[l], *zr = &R[l * 2];
@@ -325,6 +356,11 @@ static mp_limb_t * ecp_dbl(mp_limb_t R[], const mp_limb_t N[], const mp_limb_t a
 	return R;
 }
 
+/*
+ * Adds two elliptic-curve points N1 and N2 on the curve with parameter a in
+ * the finite field of order p, stores the result in R, and returns R. Point N2
+ * must be given in affine coordinates (i.e., N2[2] == 1).
+ */
 static mp_limb_t * ecp_add_aff(mp_limb_t R[], const mp_limb_t N1[], const mp_limb_t N2[], const mp_limb_t a[], const mp_limb_t p[], size_t l) {
 	const mp_limb_t *x1 = &N1[0], *y1 = &N1[l], *z1 = &N1[l * 2], *x2 = &N2[0], *y2 = &N2[l];
 	assert(mpn_one_p(&N2[l * 2], l));
@@ -357,6 +393,10 @@ static mp_limb_t * ecp_add_aff(mp_limb_t R[], const mp_limb_t N1[], const mp_lim
 	return R;
 }
 
+/*
+ * Adds two elliptic-curve points N1 and N2 on the curve with parameter a in
+ * the finite field of order p, stores the result in R, and returns R.
+ */
 static mp_limb_t * ecp_add(mp_limb_t R[], const mp_limb_t N1[], const mp_limb_t N2[], const mp_limb_t a[], const mp_limb_t p[], size_t l) {
 	const mp_limb_t *x1 = &N1[0], *y1 = &N1[l], *z1 = &N1[l * 2], *x2 = &N2[0], *y2 = &N2[l], *z2 = &N2[l * 2];
 	mp_limb_t *xr = &R[0], *yr = &R[l], *zr = &R[l * 2];
@@ -439,10 +479,19 @@ static mp_limb_t * ecp_mul_(mp_limb_t R[], const mp_limb_t n1[], const mp_limb_t
 	return R;
 }
 
+/*
+ * Multiplies the elliptic-curve point N2 on the curve with parameter a by
+ * scalar n1 in the finite field of order p, stores the result in R, and
+ * returns R.
+ */
 static mp_limb_t * ecp_mul(mp_limb_t R[], const mp_limb_t n1[], const mp_limb_t N2[], const mp_limb_t a[], const mp_limb_t p[], size_t l) {
 	return ecp_mul_(R, n1, N2, a, p, l, mpn_one_p(&N2[l * 2], l) ? &ecp_add_aff : (mp_limb_t * (*)(mp_limb_t [], const mp_limb_t [], const mp_limb_t [], const mp_limb_t [], const mp_limb_t [], size_t)) &ecp_add);
 }
 
+/*
+ * Projects the elliptic-curve point N into affine coordinate space in the
+ * finite field of order p, stores the projection in R, and returns R.
+ */
 static mp_limb_t * ecp_proj(mp_limb_t R[], const mp_limb_t N[], const mp_limb_t p[], size_t l) {
 	const mp_limb_t *x = &N[0], *y = &N[l], *z = &N[l * 2];
 	mp_limb_t *xr = &R[0], *yr = &R[l], *zr = &R[l * 2];
@@ -456,11 +505,21 @@ static mp_limb_t * ecp_proj(mp_limb_t R[], const mp_limb_t N[], const mp_limb_t 
 	return R;
 }
 
+/*
+ * Derives the elliptic-curve public key on the curve with parameter a in the
+ * finite field of order p from the given private key d using generator point
+ * G, and stores the result in Q.
+ */
 void ecp_pubkey(mp_limb_t Q[], const mp_limb_t p[], const mp_limb_t a[], const mp_limb_t G[], const mp_limb_t d[], size_t l) {
 	mp_limb_t* R = (mp_limb_t*)ALLOCA(sizeof(mp_limb_t) * 3 * l);
 	ecp_proj(Q, ecp_mul(R, d, G, a, p, l), p, l);
 }
 
+/*
+ * Signs a message z on the elliptic curve with paramater a in the finite field
+ * of order p using the given private key d and generator point G having cyclic
+ * order n, and stores the signature components in r and s.
+ */
 void ecp_sign(mp_limb_t r[], mp_limb_t s[], const mp_limb_t p[], const mp_limb_t a[], const mp_limb_t G[], const mp_limb_t n[], const mp_limb_t d[], const mp_limb_t z[], size_t l) {
 	FILE *random = fopen("/dev/urandom", "r");
 	for (;;) {
